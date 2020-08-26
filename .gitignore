@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
 /dist
+/backend/*
+!/backend/app.py
 
 
 # local env files

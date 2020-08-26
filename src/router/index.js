@@ -6,17 +6,16 @@ Vue.use(VueRouter)
 
   const routes = [
   {
-    path: '/',
+    path: '/:query(.*)',
     name: 'Home',
-    component: Home
-  },
-  {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
+    props: true,
+    component: Home,
+    beforeEnter: (to, from, next) => {
+      if (to.params.query == ''){
+        to.params.query = 'all'
+      }
+      next()
+    }
   }
 ]
 

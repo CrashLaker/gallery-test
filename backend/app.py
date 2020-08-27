@@ -5,6 +5,7 @@ import re
 import subprocess
 import traceback
 import base64
+import requests
 import json
 import uuid
 import re
@@ -28,14 +29,14 @@ class EverythingConverter(PathConverter):
 
 app.url_map.converters['everything'] = EverythingConverter
 
-folder = "./imgs/"
+folder = "/aiops/mygallery/data/"
 tfolder = f"{folder}/thumbs/"
 mfolder = f"{folder}/main/"
-metafolder = "./meta/"
+metafolder = f"{folder}meta/"
 for f2 in [folder, tfolder, mfolder, metafolder]:
     if not os.path.exists(f2):
         os.mkdir(f2)
-datatrack = "track.json"
+datatrack = f"{folder}track.json"
 if not os.path.exists(datatrack):
     vault = {"hash": {}, "rev": {}}
 else:
@@ -54,6 +55,10 @@ def load_json(filepath):
     with open(filepath) as f:
         data = json.load(f)
     return data
+
+def save_json(data, filepath):
+    with open(filepath, "w") as f:
+        json.dump(data, f)
 
 def validate_path(path):
     path = re.sub('/{2,}', '/', path)
@@ -89,18 +94,38 @@ def add_img(pathenc, serialimg):
 def thumb(img):
     lfolder = tfolder
     filepath = f"{lfolder}/{img}"
-    if os.path.exists(filepath): 
+    if os.path.exists(filepath):
         return send_file(filepath)
     return ""
 
-@app.route('/img/<img>', methods=['GET'])
+@app.route('/image/<img>', methods=['GET'])
 @cross_origin()
 def img(img):
     lfolder = mfolder
     filepath = f"{lfolder}/{img}"
-    if os.path.exists(filepath): 
+    if os.path.exists(filepath):
         return send_file(filepath)
     return ""
+
+@app.route('/del', methods=['GET', 'POST'])
+@cross_origin()
+def delname():
+    req = request.json
+
+    name = req['name']
+    path = req['path']
+    if path in vault['hash']:
+        filepath = f"{metafolder}/{vault['hash'][path]}.json"
+        files = load_json(filepath)
+
+        files = [f for f in files if f != name]
+        save_json(files, filepath)
+
+    return "ok"
+
+def download_image(link):
+    rs = requests.get(link)
+    return base64.b64encode(rs.content).decode()
 
 @app.route('/recv', methods=['GET', 'POST'])
 @cross_origin()
@@ -114,6 +139,8 @@ def recv():
     path = req['path']
     print(path)
     print(image[:30])
+    if "http" in image:
+        image = download_image(image)
     pathenc = validate_path(path)
 
     serial = get_serial()
@@ -133,7 +160,7 @@ def recv():
     serialimg = f"{serial}.png"
     add_img(pathenc, serialimg)
 
-    return serialimg 
+    return serialimg
 
 
 def imgfromb64(text): #data:image/png;base64,...
@@ -151,7 +178,7 @@ def listpath(path):
         files = load_json(f"{metafolder}/{vault['hash'][path]}.json")
     else:
         files = []
-    return jsonify(files)
+    return jsonify(files[::-1])
 
 @app.route('/', methods=['GET', 'POST'])
 @cross_origin()
@@ -163,9 +190,9 @@ def create_app():
     return app
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9090, debug=True)
-    
-    #test 
+    app.run(host='0.0.0.0', port=8089, debug=True)
+
+    #test
     #with app.test_client() as c:
     #    rs = c.get("/")
     #    print(rs.data)

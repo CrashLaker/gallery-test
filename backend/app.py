@@ -92,12 +92,12 @@ def validate_path(path):
     return serial
 
 def add_img(pathenc, serialimg):
-    filepath = f"{metafolder}/{pathenc}.json"
-    with open(filepath) as f:
-        data = json.load(f)
+    filepath = f"{metafolder}/{pathenc}.txt"
+    data = open(filepath).read().split("\n")
+    data = [d for d in data if d != ""]
     data.append(serialimg)
     with open(filepath, 'w') as f:
-        json.dump(data, f)
+        f.write("\n".join(data))
 
 
 @app.route('/thumb/<img>', methods=['GET'])
@@ -209,7 +209,7 @@ def imgfromb64(text): #data:image/png;base64,...
 @cross_origin()
 def listpath(path):
     if path in vault['hash']:
-        files = load_json(f"{metafolder}/{vault['hash'][path]}.json")
+        files = open(f"{metafolder}/{vault['hash'][path]}.txt").read().split("\n")
     else:
         files = []
     return jsonify(files[::-1])

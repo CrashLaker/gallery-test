@@ -30,7 +30,9 @@ class EverythingConverter(PathConverter):
 
 app.url_map.converters['everything'] = EverythingConverter
 
-folder = "./"
+folder = os.get("MYGALLERY_ROOT", "-")
+if folder == "-":
+    raise Exception("ENV MYGALLERY_ROOT not set")
 tfolder = f"{folder}/thumbs/"
 mfolder = f"{folder}/main/"
 metafolder = f"{folder}meta/"

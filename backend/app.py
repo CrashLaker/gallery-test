@@ -10,6 +10,7 @@ import json
 import uuid
 import re
 import io
+import PIL
 from PIL import Image
 import werkzeug
 from werkzeug.routing import PathConverter
@@ -29,7 +30,7 @@ class EverythingConverter(PathConverter):
 
 app.url_map.converters['everything'] = EverythingConverter
 
-folder = "/aiops/mygallery/data/"
+folder = "./"
 tfolder = f"{folder}/thumbs/"
 mfolder = f"{folder}/main/"
 metafolder = f"{folder}meta/"
@@ -127,9 +128,29 @@ def download_image(link):
     rs = requests.get(link)
     return base64.b64encode(rs.content).decode()
 
+#https://stackoverflow.com/questions/48229318/how-to-convert-image-pil-into-base64-without-saving/48229407
+#ty @Taha Mahjoubi
+def img_to_base64_str(img):
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    buffered.seek(0)
+    img_byte = buffered.getvalue()
+    img_str = "data:image/png;base64," + base64.b64encode(img_byte).decode()
+    return img_str
+
 @app.route('/recv', methods=['GET', 'POST'])
 @cross_origin()
 def recv():
+    uploaded_file = request.files.to_dict()
+    if uploaded_file:
+        req = request.form.to_dict()
+        path = req['path']
+        pathenc = validate_path(path)
+        for k,image in uploaded_file.items():
+            img = Image.open(image)
+            save_image(pathenc, img_to_base64_str(img))
+        return 'ok'
+
     req = request.json
 
     if not 'image64' in req:
@@ -139,10 +160,13 @@ def recv():
     path = req['path']
     print(path)
     print(image[:30])
-    if "http" in image:
+    if "http" == image[:4]:
         image = download_image(image)
     pathenc = validate_path(path)
 
+    return save_image(pathenc, image)
+
+def save_image(pathenc, image):
     serial = get_serial()
     while os.path.exists(f"{mfolder}/{serial}.png"):
         serial = get_serial()
@@ -190,7 +214,7 @@ def create_app():
     return app
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8089, debug=True)
+    app.run(host='0.0.0.0', port=9090, debug=True)
 
     #test
     #with app.test_client() as c:

@@ -20,16 +20,34 @@
     </nav>
     <div class="container" style="padding-top:10px;">
       <div class="row">
-        <div class="col s2">
-          <textarea
-            @change="textareaChange"
-            style="height:50px;"></textarea>
+        <div class="col s2"
+            style="display:flex; 
+                    flex-direction:row; 
+                    align-content: center;
+                    align-items: center;
+                    justify-content: space-around;
+                    height:50px;">
+          <i class="fa fa-file-pdf" style="font-size:30px;"></i>
+          <i class="fa fa-file-archive" style="font-size:30px;"></i>
+          <i class="material-icons" style="font-size:35px;">slideshow</i>
         </div>
-        <div class="col s10"
+        <div class="col s4"
+            style="overflow:hidden;height:50px;"
+            >
+            <input type="file" ref="file" multiple="multiple"
+              @change="onInputChange"
+              style="width:100%;height:50px;"/>
+        </div>
+        <div class="col s4"
             style="border:1px dashed; height:50px; line-height:50px;"
             @dragover.prevent
             @drop="onDrop">
           Dropme
+        </div>
+        <div class="col s2">
+          <textarea
+            v-model="textareaValue"
+            style="height:50px;"></textarea>
         </div>
       </div>
       <div class="row">
@@ -73,7 +91,7 @@
 import HelloWorld from '@/components/HelloWorld.vue'
 import M from 'materialize-css'
 
-var baseurl = `http://10.11.192.180:8089`
+var baseurl = `http://codeserver:9096`
 var thumburl = `${baseurl}/thumb/`
 var imageurl = `${baseurl}/image/`
 export default {
@@ -85,12 +103,35 @@ export default {
     return {
       queryInput: '',
       imageData: '',
+      textareaValue: '',
       imageList: [],
       baseurl,
       thumburl
     }
   },
   methods: {
+    onInputChange(){
+      let formData = new FormData();
+
+      for( var i = 0; i < this.$refs.file.files.length; i++ ){
+          let file = this.$refs.file.files[i];
+          console.log(file);
+          formData.append('files[' + i + ']', file);
+      }
+      formData.append('path', this.query)
+      this.axios.post(baseurl+'/recv', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }).then((rs) => {
+        this.msg('Upload Ok')
+        this.rebuild_list()
+      }).catch((err) => {
+
+      }).finally(() => {
+        this.$refs.file.value = ''
+      })
+    },
     onCopy(){
       this.msg('Copied Ok')
     },
@@ -127,7 +168,6 @@ export default {
       //let data = URL.createObjectURL(file)
       this.createBase64Image(file, (img) => {
         this.sendImage64(img)
-        this.msg('Save Ok')
       })
     },
     sendImage64(data64){
@@ -141,13 +181,16 @@ export default {
         this.msg('Save Ok')
       })
     },
-    textareaChange: function (e){
-      console.log(e)
-      let val = e.target.value
-      if (val.includes('data:image')){
-        this.sendImage64(val)
-        e.target.value = ''
-      }
+    textareaChange: function (val){
+      this.textareaValue = ''
+      this.msg('Sending..')
+      setTimeout(() => {
+        if (val.includes('data:image')){
+          this.sendImage64(val)
+        }else if (val.includes('http')){
+          this.sendImage64(val)
+        }
+      }, 100)
     },
     setInputValue(value){
       this.$refs.inputPath.value = value
@@ -205,6 +248,10 @@ export default {
       console.log('watch', to)
       //this.setInputValue(to)
       this.rebuild_list()
+    },
+    'textareaValue': function (to, from){
+      if (to != '')
+        this.textareaChange(to)
     }
   }
 }

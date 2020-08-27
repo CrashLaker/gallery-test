@@ -6,6 +6,6 @@ module.exports = {
         watchOptions: {
             poll: true
         },
-        public: 'http://codeserver:8086'
+        public: process.env.BASEURL
     },
 }

@@ -91,7 +91,7 @@
 import HelloWorld from '@/components/HelloWorld.vue'
 import M from 'materialize-css'
 
-var baseurl = `http://codeserver:9096`
+var baseurl = process.env.VUE_APP_BASEURL
 var thumburl = `${baseurl}/thumb/`
 var imageurl = `${baseurl}/image/`
 export default {

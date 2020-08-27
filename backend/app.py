@@ -30,9 +30,17 @@ class EverythingConverter(PathConverter):
 
 app.url_map.converters['everything'] = EverythingConverter
 
-folder = os.environ.get("MYGALLERY_ROOT", "-")
-if folder == "-":
-    raise Exception("ENV MYGALLERY_ROOT not set")
+myapp = {}
+myenvs = {
+    "port": "MYGALLERY_PORT",
+    "folder": "MYGALLERY_ROOT"
+}
+for key, envpath in myenvs.items():
+    val = os.environ.get(envpath, "-")
+    if val == "-":
+        raise Exception(f"ENV {envpath} not set")
+    myapp[key] = val
+folder = myapp["folder"]
 tfolder = f"{folder}/thumbs/"
 mfolder = f"{folder}/main/"
 metafolder = f"{folder}meta/"
@@ -216,7 +224,7 @@ def create_app():
     return app
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9090, debug=True)
+    app.run(host='0.0.0.0', port=myapp["port"], debug=True)
 
     #test
     #with app.test_client() as c:

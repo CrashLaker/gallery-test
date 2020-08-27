@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, json, abort, redirect, url_for, render_template, send_file
+from flask import Flask, request, jsonify, json, abort, redirect, url_for, render_template, send_file, Response
 from flask_cors import CORS, cross_origin
 import os
 import re
 import subprocess
+import threading
 import traceback
 import base64
 import requests
@@ -204,6 +205,35 @@ def imgfromb64(text): #data:image/png;base64,...
     img = Image.open(buf)
     return img
 
+#https://stackoverflow.com/questions/44185486/generate-and-stream-compressed-file-with-flask
+@app.route('/download_zip/<everything:path>', methods=['GET', 'POST'])
+@cross_origin()
+def download_zip(path):
+    if path in vault['hash']:
+        filepath = f"{metafolder}/{vault['hash'][path]}.txt"
+        response = Response(yield_zip(filepath), mimetype='application/zip')
+        response.headers['Content-Disposition'] = 'attachment; filename=data.zip'
+        return response
+    return 'no path'
+
+def yield_zip(filepath):
+    #cmd = ['cat', filepath, '|' '/usr/bin/zip', '-0', '-j', '-q', '-r', '-', '-@']
+    cmd = [f'cat {filepath} | zip -0 -j -q -r - -@']
+    proc = subprocess.Popen(cmd, 
+                    bufsize=0, 
+                    shell=True,
+                    cwd=mfolder,
+                    stdin=subprocess.PIPE, 
+                    stdout=subprocess.PIPE)
+
+    try:
+        while True:
+            buf = proc.stdout.read(4096)
+            if len(buf) == 0:
+                break
+            yield buf
+    finally:
+        proc.wait()
 
 @app.route('/list/<everything:path>', methods=['GET', 'POST'])
 @cross_origin()

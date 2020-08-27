@@ -6,6 +6,6 @@ module.exports = {
         watchOptions: {
             poll: true
         },
-        public: process.env.BASEURL
+        public: process.env.PUBLIC_URL
     },
 }

@@ -27,9 +27,12 @@
                     align-items: center;
                     justify-content: space-around;
                     height:50px;">
-          <i class="fa fa-file-pdf" style="font-size:30px;"></i>
-          <i class="fa fa-file-archive" style="font-size:30px;"></i>
-          <i class="material-icons" style="font-size:35px;">slideshow</i>
+          <i class="fa fa-file-pdf" 
+                  style="font-size:30px;cursor:no-drop;"></i>
+          <i class="fa fa-file-archive" 
+                  style="font-size:30px;cursor:pointer;"
+                  @click="downloadZip"></i>
+          <i class="material-icons" style="font-size:35px;cursor:no-drop;">slideshow</i>
         </div>
         <div class="col s4"
             style="overflow:hidden;height:50px;"
@@ -110,6 +113,9 @@ export default {
     }
   },
   methods: {
+    downloadZip(){
+      window.open(baseurl+'/download_zip/'+this.query, '_blank')
+    },
     onInputChange(){
       let formData = new FormData();
 

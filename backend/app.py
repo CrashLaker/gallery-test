@@ -82,9 +82,9 @@ def validate_path(path):
         serial = get_serial()
         while serial in vault['rev']:
             serial = get_serial()
-        metapath = f"{metafolder}/{serial}.json"
+        metapath = f"{metafolder}/{serial}.txt"
         with open(metapath, 'w') as f:
-            json.dump([], f)
+            f.write("")
         vault['hash'][path] = serial
         vault['rev'][serial] = path
         save_vault()

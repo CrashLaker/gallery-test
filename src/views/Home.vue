@@ -111,7 +111,8 @@ export default {
       textareaValue: '',
       imageList: [],
       baseurl,
-      thumburl
+      thumburl,
+      last_path: ''
     }
   },
   methods: {
@@ -215,6 +216,7 @@ export default {
         query = 'all'
         this.setInputValue(query)
       }
+      if (query == this.last_path) return
       this.$router.push({path: '/'+query})
     },
     onDrop: function (e){
@@ -238,6 +240,7 @@ export default {
       let tquery = this.$route.params.query
       this.setInputValue(tquery)
       this.axios.get(baseurl+'/list/'+tquery).then((rs) => {
+        this.last_path = tquery
         this.imageList = rs.data
       })
     },

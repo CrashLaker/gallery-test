@@ -54,7 +54,8 @@ if not os.path.exists(datatrack):
 else:
     with open(datatrack) as f:
         vault = json.load(f)
-
+#{"hash": {"all": "4d7a0459fb694876a8ffc68ff906fbc4", ...
+# "rev": {"4d7a0459fb694876a8ffc68ff906fbc4": "all", ...
 
 def get_serial():
     return uuid.uuid4().hex
@@ -100,6 +101,22 @@ def add_img(pathenc, serialimg):
     with open(filepath, 'w') as f:
         f.write("\n".join(data))
 
+@app.route('/search/<path>', methods=['GET'])
+@cross_origin()
+def r_search(path=""):
+    ret = []
+    if path == "":
+        ret = list(vault.keys())[:10]
+    else:
+        path = base64.b64decode(path).decode().lower()
+        lim = 10
+        for k in vault.get('hash', {}):
+            if path in k.lower():
+                ret.append(k)
+            if len(ret) == lim:
+                break
+    ret = {k:None for k in ret}
+    return jsonify(ret)
 
 @app.route('/thumb/<img>', methods=['GET'])
 @cross_origin()

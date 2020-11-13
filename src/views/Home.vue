@@ -10,6 +10,8 @@
                 type="text"
                 id="autocomplete-input"
                 @keyup.enter="changePath"
+                @keyup="inputOnChange"
+                autocomplete="off"
                 ref="inputPath"
                 class="col s11 autocomplete"
                 style="color:white;margin-top:8px;"/>
@@ -113,6 +115,10 @@ export default {
     }
   },
   methods: {
+    bodyHook(value){
+      console.log('body hook trigger', value)
+      this.sendImage64(value)
+    },
     downloadZip(){
       window.open(baseurl+'/download_zip/'+this.query, '_blank')
     },
@@ -164,6 +170,7 @@ export default {
       M.toast({html: msg})
     },
     onPaste: function (e){
+      return
       console.log('paste trigger', e)
       var pastedData = e.clipboardData.getData('text')
       if (pastedData.includes('http')){
@@ -233,21 +240,61 @@ export default {
       this.axios.get(baseurl+'/list/'+tquery).then((rs) => {
         this.imageList = rs.data
       })
-    }
+    },
+    inputOnChange(e){
+      if (this.last_search == e.target.value) return
+      if (e.key == 'ArrowDown' || e.key == 'ArrowUp') return
+      if (e.key == 'Enter'){
+        this.instance.close()
+        return
+      }
+      this.axios.get(baseurl+'/search/'+btoa(e.target.value)).then((rs) => {
+        this.instance.updateData(rs.data)
+        this.last_search = e.target.value
+        if (!this.instance.isOpen)
+          this.instance.open()
+      })
+    },
+    updateAutocomplete(){
+      //https://stackoverflow.com/questions/39883425/materialize-autocomplete-with-dynamic-data-in-jquery-ajax
+      let obj = this
+      document.addEventListener('DOMContentLoaded', function (){
+        let elem = obj.$el.querySelector('.autocomplete') 
+        console.log(elem)
+        obj.instance = M.Autocomplete.init(elem, {
+          data: {
+            Google: null
+          },
+          onAutocomplete: (val) => {
+            obj.changePath()
+          }
+        })
+        window.instance = obj.instance
+      })
+      //instances[0].autocomplete({
+      //  data: {
+      //    Apple: null,
+      //    Microsoft: null,
+      //    Google: null
+      //  }
+      //}) 
+    },
   },
   created(){
     this.queryInput = this.query
   },
   mounted(){
+    window.bodyHook = this.bodyHook
     document.getElementById('home').addEventListener('paste', this.onPaste)
     this.rebuild_list()
-    var elems = document.querySelectorAll('.autocomplete')
-    var instances = M.Autocomplete.init(elems, {
-      data: {
-        'all': null,
-        'meetings/splunk/1': null
-      }
-    })
+    //var elems = document.querySelectorAll('.autocomplete')
+    //var instances = M.Autocomplete.init(elems, {
+    //  data: {
+    //    'all': null,
+    //    'meetings/splunk/1': null
+    //  }
+    //})
+    this.updateAutocomplete()
   },
   watch: {
     $route(to, from){

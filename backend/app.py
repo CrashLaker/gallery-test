@@ -101,6 +101,7 @@ def add_img(pathenc, serialimg):
     with open(filepath, 'w') as f:
         f.write("\n".join(data))
 
+@app.route('/search/', methods=['GET'])
 @app.route('/search/<path>', methods=['GET'])
 @cross_origin()
 def r_search(path=""):

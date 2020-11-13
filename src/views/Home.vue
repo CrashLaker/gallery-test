@@ -96,7 +96,10 @@
 import HelloWorld from '@/components/HelloWorld.vue'
 import M from 'materialize-css'
 
-var baseurl = process.env.VUE_APP_BASEURL
+let wloc = window.location
+var baseurl = `${wloc.protocol}//api-${wloc.hostname}`
+if (process.env.NODE_ENV == 'development' || process.env.VUE_APP_FORCE_BASE)
+  baseurl = process.env.VUE_APP_BASEURL
 var thumburl = `${baseurl}/thumb/`
 var imageurl = `${baseurl}/image/`
 export default {

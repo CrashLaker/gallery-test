@@ -1,23 +1,19 @@
 <template>
   <div id="home">
     <nav class="indigo">
-      <div class="nav-wrapper container">
-        <ul id="nav-mobile" class="left hide-on-med-and-down" style="width:100%;">
-          <li style="width:100%;">
-            <div class="input-field inline row" style="width:100%;">
-              <span class="col s1">Path:</span>
-              <input
-                type="text"
-                id="autocomplete-input"
-                @keyup.enter="changePath"
-                @keyup="inputOnChange"
-                autocomplete="off"
-                ref="inputPath"
-                class="col s11 autocomplete"
-                style="color:white;margin-top:8px;"/>
-            </div>
-          </li>
-        </ul>
+      <div class="nav-wrapper container" style="display:flex;">
+          <span class="col s1">Path:</span>
+          <div class="input-field inline" style="width:100%;">
+            <input
+              type="text"
+              id="autocomplete-input"
+              @keyup.enter="changePath"
+              @keyup="inputOnChange"
+              autocomplete="off"
+              ref="inputPath"
+              class="col s11 autocomplete"
+              style="color:white;margin-top:8px;"/>
+          </div>
       </div>
     </nav>
     <div class="container" style="padding-top:10px;">
@@ -39,7 +35,7 @@
         <div class="col s4"
             style="overflow:hidden;height:50px;"
             >
-            <input type="file" ref="file" multiple="multiple"
+            <input type="file" ref="file" multiple
               @change="onInputChange"
               style="width:100%;height:50px;"/>
         </div>
@@ -78,7 +74,9 @@
               style="display:flex;flex-direction:row;justify-content:space-around;">
                 <i style="cursor:pointer;" class="fa fa-eye"
                     @click="onView(img)"></i>
-                <i style="cursor:pointer;" class="fa fa-link"></i>
+                <i style="cursor:pointer;" class="fa fa-link"
+                      v-clipboard:copy="buildLink(img)"
+                      v-clipboard:success="onCopy"></i>
                 <i style="cursor:pointer;" class="fab fa-markdown"
                     v-clipboard:copy="buildMarkdown(img)"
                     v-clipboard:success="onCopy"></i>
@@ -100,6 +98,8 @@ let wloc = window.location
 var baseurl = `${wloc.protocol}//api-${wloc.hostname}`
 if (process.env.NODE_ENV == 'development' || process.env.VUE_APP_FORCE_BASE)
   baseurl = process.env.VUE_APP_BASEURL
+if (baseurl.includes('codeserver'))
+  baseurl = 'http://api-dupi2.localshi.com'
 var thumburl = `${baseurl}/thumb/`
 var imageurl = `${baseurl}/image/`
 export default {
@@ -131,25 +131,29 @@ export default {
 
       for( var i = 0; i < this.$refs.file.files.length; i++ ){
           let file = this.$refs.file.files[i];
-          console.log(file);
           formData.append('files[' + i + ']', file);
       }
       formData.append('path', this.query)
+      this.msg('Uploading...')
       this.axios.post(baseurl+'/recv', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
         }
       }).then((rs) => {
         this.msg('Upload Ok')
         this.rebuild_list()
       }).catch((err) => {
-
+        M.toast({'html': err})
       }).finally(() => {
         this.$refs.file.value = ''
       })
     },
     onCopy(){
       this.msg('Copied Ok')
+    },
+    buildLink(img){
+      let imgurl = imageurl+img
+      return imgurl
     },
     buildMarkdown(img){
       let imgurl = imageurl+img
